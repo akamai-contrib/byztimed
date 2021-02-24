@@ -1,0 +1,3 @@
+[submodule "byztime-sys/libbyztime"]
+	path = byztime-sys/libbyztime
+	url = https://github.com/akamai-contrib/libbyztime

@@ -1,0 +1,88 @@
+//Copyright 2021, Akamai Technologies, Inc.
+//SPDX-License-Identifier: Apache-2.0
+
+syntax = "proto3";
+
+package byztimed.wire;
+
+/* Top-level message used for all time packets */
+message Packet {
+  /* Enumeration of message types */
+  oneof msg {
+    RequestEnvelope request = 1; /* A request packet */
+    ResponseEnvelope response = 2; /* A non-error response packet */
+    Error error = 3; /* An error response packet */
+  };
+};
+
+/* Encrypted envelope for a time request */
+message RequestEnvelope {
+  bytes ad = 1; /* Serialized RequestAD */
+  bytes nonce = 2;
+  bytes ciphertext = 3; /* Encrypted serialized Request */
+  bytes padding = 4;
+};
+
+/* Associated data for a time query */
+message RequestAD {
+  bytes unique_id = 1; /* 16-byte string uniquely identifying this request */
+  bytes cookie = 2; /* An NTS cookie. This a serialized Cookie message, but the client should consider it opaque. */
+};
+
+/* Plaintext of a time request */
+message Request {
+  uint32 num_cookies = 1; /* Number of cookies the client is asking the server to send back */
+};
+
+/* Encrypted envelope for a response to a time query */
+message ResponseEnvelope {
+  bytes ad = 1; /* Serialized ResponseAD */
+  bytes nonce = 2; /* Nonce for AEAD */
+  bytes ciphertext = 3; /* Encrypted serialized Response */
+};
+
+/* Associated data for a response to a time query */
+message ResponseAD {
+  bytes unique_id = 1; /* 16-byte unique identifier echoed from the request we're responding to */
+};
+
+/* Plaintext of a response to a time query */
+message Response {
+  bytes era = 1; /* This server's current era */
+  Timestamp local_clock = 2; /* This server's local clock */
+  Timestamp offset = 3; /* Estimate of (global clock - local clock) */
+  repeated bytes cookies = 4; /* New NTS cookies for the receiver to send with future queries */
+};
+
+/* A count of seconds and nanoseconds */
+message Timestamp {
+  int64 seconds = 1;
+  fixed32 nanoseconds = 2;
+};
+
+/* An error response */
+message Error {
+  bytes unique_id = 1; /* 16-byte unique identifier echoed from the erroneous request */
+  /* Enumeration of error types */
+  oneof error  {
+    CryptoNak crypto_nak = 2; /* We couldn't decrypt the sender's request */
+  };
+};
+
+/* Empty message which could carry details of a crypto-NAK error. */
+message CryptoNak {
+};
+
+/* This message gets serialized to form a cookie */
+message Cookie {
+  fixed32 key_id = 1; /* ID of the master key used to encrypt this cookie */
+  bytes nonce = 2; /* Nonce used to encrypt this cookie */
+  bytes ciphertext = 3; /* Encrypted serialized UnwrappedCookie */
+};
+
+/* Plaintext contents of a cookie */
+message UnwrappedCookie {
+  uint32 alg_id = 1; /* The negotiated AEAD algorithm for this session */
+  bytes c2s = 2; /* The C2S key for this session */
+  bytes s2c = 3; /* The S2C key for this session */
+};

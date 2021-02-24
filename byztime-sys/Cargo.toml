@@ -1,0 +1,18 @@
+[package]
+name = "byztime-sys"
+version = "2.0.0-alpha1"
+authors = ["Daniel Fox Franke <dfoxfranke@gmail.com>"]
+description = "Raw FFI bindings for libbyztime"
+edition = "2018"
+links = "byztime"
+repository = "https://github.com/akamai-contrib/byztimed"
+license = "Apache-2.0"
+keywords = ["byzantine", "time", "byztime"]
+categories = ["external-ffi-bindings", "date-and-time"]
+
+
+[dependencies]
+libc = "0.2"
+
+[build-dependencies]
+cc = "1.0"
