@@ -5,7 +5,7 @@
 //! time among a group of peers, without reliance on any external
 //! authority. This crate wraps [byztime_sys] (which in turn wraps
 //! the C library libbyztime) to provide an idiomatic Rust API for
-//! communication from [byztimed](https://crates.io/crate/byztimed)
+//! communication from [byztimed](https://crates.io/crates/byztimed)
 //! to applications which consume time from it.
 //!
 //! libbyztime employs a "blackboard" pattern of one-way
