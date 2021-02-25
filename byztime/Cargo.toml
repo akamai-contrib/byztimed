@@ -1,6 +1,6 @@
 [package]
 name = "byztime"
-version = "2.0.0-alpha1"
+version = "2.0.0"
 authors = ["Daniel Franke <dafranke@akamai.com>"]
 edition = "2018"
 description = "Idiomatic Rust bindings for libbbyztime"
@@ -13,7 +13,7 @@ categories = ["api-bindings", "date-and-time"]
 with_quickcheck = [ "quickcheck", "rand" ]
 
 [dependencies]
-byztime-sys = { version = "2.0.0-alpha1", path = "../byztime-sys" }
+byztime-sys = { version = "2.0.0", path = "../byztime-sys" }
 errno = "0.2"
 libc = "0.2"
 quickcheck = { version = "0.9", optional = true }
