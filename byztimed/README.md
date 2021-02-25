@@ -82,7 +82,8 @@ contributing some new functionality to other OS kernels.
 ## Usage
 
 Run byztimed as `byztimed <path-to-config-file>`. See
-[CONFIG.md](CONFIG.md) for configuration file syntax.
+[CONFIG.md](https://github.com/akamai-contrib/byztimed/CONFIG.md)
+for configuration file syntax.
 
 [`libbyztime`](https://github.com/akamai-contrib/libbyztime)
 is the C client library for consuming time from `byztimed`. See its
