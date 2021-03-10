@@ -1,6 +1,6 @@
 [package]
 name = "byztimed"
-version = "2.0.0"
+version = "2.0.1"
 authors = ["Daniel Franke <dafranke@akamai.com>"]
 description = "Byzantine fault-tolerant time synchronization"
 edition = "2018"
