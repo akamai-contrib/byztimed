@@ -26,7 +26,7 @@ use log::{debug, trace};
 use rand::thread_rng;
 use std::iter::FromIterator;
 use tokio::io;
-use tokio::prelude::*;
+use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio_rustls::rustls::Session;
 
 #[cfg(test)]

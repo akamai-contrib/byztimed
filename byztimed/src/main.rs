@@ -16,8 +16,8 @@ use std::net;
 use std::path;
 use std::process;
 use std::sync::*;
+use tokio::io;
 use tokio::net::{TcpListener, UdpSocket};
-use tokio::prelude::*;
 use tokio::signal::unix::{signal, SignalKind};
 use tokio::sync::mpsc;
 use tokio::time;
@@ -93,7 +93,7 @@ impl std::error::Error for FatalError {
 }
 
 fn main() {
-    let mut runtime = tokio::runtime::Runtime::new().unwrap();
+    let runtime = tokio::runtime::Runtime::new().unwrap();
 
     if let Err(e) = runtime.block_on(async_main()) {
         eprintln!("{}", e);
@@ -143,8 +143,7 @@ async fn async_main() -> Result<(), FatalError> {
 
     /* Initialize the DNS resolver */
     let resolver = Arc::new(
-        trust_dns_resolver::AsyncResolver::from_system_conf(tokio::runtime::Handle::current())
-            .await
+        trust_dns_resolver::AsyncResolver::tokio_from_system_conf()
             .map_err(FatalError::ResolverError)?,
     );
 
@@ -202,24 +201,24 @@ async fn async_main() -> Result<(), FatalError> {
 
     /* Bind client socket and spawn assoicated tasks */
     if !state.cfg.peers.is_empty() {
-        let time_client_socket = UdpSocket::bind(&net::SocketAddr::new(
-            net::IpAddr::V6(net::Ipv6Addr::UNSPECIFIED),
-            0,
-        ))
-        .await
-        .map_err(FatalError::UdpClientBindError)?;
-
-        let (recv_half, send_half) = time_client_socket.split();
+        let time_client_socket = Arc::new(
+            UdpSocket::bind(&net::SocketAddr::new(
+                net::IpAddr::V6(net::Ipv6Addr::UNSPECIFIED),
+                0,
+            ))
+            .await
+            .map_err(FatalError::UdpClientBindError)?,
+        );
 
         watch(
             state.clone(),
-            tick_task(state.clone(), resolver, send_half),
+            tick_task(state.clone(), resolver, time_client_socket.clone()),
             "tick handler",
         )
         .await;
         watch(
             state.clone(),
-            time_response_task(state.clone(), recv_half),
+            time_response_task(state.clone(), time_client_socket),
             "time response handler",
         )
         .await;
@@ -289,7 +288,7 @@ async fn watch<F: Future<Output = io::Result<()>> + Send + 'static>(
 }
 
 ///Task for serving NTS-KE requests
-async fn ntske_server_task(state: Arc<GlobalState>, mut listener: TcpListener) -> io::Result<()> {
+async fn ntske_server_task(state: Arc<GlobalState>, listener: TcpListener) -> io::Result<()> {
     loop {
         match listener.accept().await {
             Ok((tcp_stream, peer_addr)) => {
@@ -332,7 +331,7 @@ async fn time_server_task(state: Arc<GlobalState>, mut socket: UdpSocket) -> io:
 async fn tick_task(
     state: Arc<GlobalState>,
     resolver: Arc<trust_dns_resolver::TokioAsyncResolver>,
-    socket: tokio::net::udp::SendHalf,
+    socket: Arc<tokio::net::UdpSocket>,
 ) -> io::Result<()> {
     if state.cfg.peers.is_empty() {
         return Ok(());
@@ -340,8 +339,6 @@ async fn tick_task(
     let tick_period =
         time::Duration::from_secs_f64(state.cfg.poll_interval / state.cfg.peers.len() as f64);
     let mut interval = time::interval(tick_period);
-
-    let socket_mutex = Arc::new(tokio::sync::Mutex::new(socket));
 
     let peers: Vec<PeerName> = state.cfg.peers.keys().cloned().collect();
     let mut next_peer = 0;
@@ -361,12 +358,12 @@ async fn tick_task(
         let my_state = state.clone();
         let my_peer_name = peer_name.clone();
         let my_resolver = resolver.clone();
-        let my_socket_mutex = socket_mutex.clone();
+        let my_socket = socket.clone();
 
         tokio::spawn(async move {
             time_client::send_time_request(
                 &my_resolver,
-                my_socket_mutex.as_ref(),
+                my_socket.as_ref(),
                 &my_peer_name,
                 &peer_config,
                 &my_state.core_state,
@@ -393,9 +390,10 @@ async fn single_node_tick_task(state: Arc<GlobalState>) -> io::Result<()> {
 ///Task for handling incoming responses to our time queries
 async fn time_response_task(
     state: Arc<GlobalState>,
-    mut receiver: tokio::net::udp::RecvHalf,
+    receiver: Arc<tokio::net::UdpSocket>,
 ) -> io::Result<()> {
-    time_client::time_response_listener(&mut receiver, &state.core_state, &state.secret_store).await
+    time_client::time_response_listener(receiver.as_ref(), &state.core_state, &state.secret_store)
+        .await
 }
 
 ///Task for periodically updating our real-time offset

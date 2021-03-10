@@ -168,7 +168,7 @@ pub fn serialize_time_request(
 /// `core_state` that it's in flight.
 pub async fn send_time_request(
     resolver: &trust_dns_resolver::TokioAsyncResolver,
-    socket_mutex: &tokio::sync::Mutex<tokio::net::udp::SendHalf>,
+    socket: &tokio::net::UdpSocket,
     peer_name: &PeerName,
     peer_config: &PeerConfig,
     core_state: &RwLock<core::CoreState>,
@@ -271,7 +271,6 @@ pub async fn send_time_request(
         cookies_requested,
     );
 
-    let mut socket = socket_mutex.lock().await;
     core_state
         .write()
         .unwrap()
@@ -554,7 +553,7 @@ pub fn handle_time_response<Response: Buf>(
 ///Listen forever on `socket`. Process any responses that come in. If any
 /// errors occur, log them and continue.
 pub async fn time_response_listener(
-    socket: &mut net::udp::RecvHalf,
+    socket: &tokio::net::UdpSocket,
     core_state: &RwLock<core::CoreState>,
     secret_store: &SecretStore,
 ) -> io::Result<()> {

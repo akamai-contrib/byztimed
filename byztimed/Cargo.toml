@@ -18,7 +18,7 @@ harness = false
 aead = "0.3"
 aes-siv = "0.5"
 bincode = "1.3"
-bytes = "0.5"
+bytes = "1"
 byztime = { version = "2.0.0", path = "../byztime" }
 clap = "2.33"
 errno = "0.2"
@@ -26,24 +26,24 @@ libc = "0.2"
 lmdb-rkv = "0.14"
 log = { version = "0.4", features = ["release_max_level_info"] }
 log4rs = "1.0"
-prost = "0.6"
+prost = "0.7"
 rand = "0.7"
-rkv = "0.16"
+rkv = "0.17"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 tempfile = "3.1"
-trust-dns-resolver = "0.19"
-tokio = { version = "0.2", features = ["full"] }
-tokio-rustls = "0.15"
+trust-dns-resolver = "0.20"
+tokio = { version = "1", features = ["full"] }
+tokio-rustls = "0.22"
 
 [dev-dependencies]
 bencher = "0.1"
 byztime = { version = "2.0.0", path = "../byztime", features = ["with_quickcheck"] }
 lazy_static = "1.4"
-nix = "0.19"
+nix = "0.20"
 quickcheck = "0.9"
 quickcheck_derive = "0.3"
-quickcheck_macros = "0.9"
+quickcheck_macros = "1"
 
 [build-dependencies]
-prost-build = "0.6"
+prost-build = "0.7"
